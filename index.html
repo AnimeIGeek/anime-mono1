@@ -18,6 +18,7 @@
             --blur-effect: blur(12px);
             --transition: all 0.6s ease-in-out;
             --highlight-color: #e50914;
+            --watch-later-color: #90EE90; /* Verde abacate */
         }
 
         [data-theme="light"] {
@@ -259,9 +260,24 @@
             color: #fff;
         }
 
+        .action-button.watch-later {
+            background: var(--watch-later-color);
+        }
+
+        .action-button.watch-later:hover {
+            background: #78D878; /* Tom mais escuro de verde abacate */
+            transform: scale(1.05);
+        }
+
         .action-button:hover {
             transform: scale(1.05);
             background: #ff1a1a;
+        }
+
+        .action-button:disabled {
+            background: #808080;
+            cursor: not-allowed;
+            transform: none;
         }
 
         .thumbnails {
@@ -409,17 +425,22 @@
 
         .notification {
             position: fixed;
-            bottom: 10px;
-            right: 10px;
-            padding: 7px 14px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 15px 30px;
             background: rgba(18, 21, 32, 0.95);
             color: var(--text-primary);
-            box-shadow: 0 2px 8px var(--shadow-color);
+            box-shadow: 0 4px 12px var(--shadow-color);
             opacity: 0;
-            transform: translateY(10px);
-            transition: opacity 0.3s ease, transform 0.3s ease;
+            transition: opacity 0.3s ease;
             z-index: 2000;
-            font-size: 0.75em;
+            font-size: 1.2em;
+            font-weight: 500;
+            text-align: center;
+            border-radius: 8px;
+            max-width: 90%;
+            width: 400px; /* Garante formato retangular */
         }
 
         [data-theme="light"] .notification {
@@ -429,7 +450,6 @@
 
         .notification.show {
             opacity: 1;
-            transform: translateY(0);
         }
 
         .anime-info {
@@ -535,13 +555,19 @@
             .video-player {
                 height: 153px;
             }
+
+            .notification {
+                font-size: 1em;
+                padding: 10px 20px;
+                width: 300px; /* Mantém retangular em telas menores */
+            }
         }
     </style>
 </head>
 <body data-theme="light">
     <div class="top-bar">
-        <a href="https://anime-site-principal.com" class="top-bar__link" aria-label="Voltar ao site principal">
-            <i class="fas fa-arrow-left"></i> Voltar ao Site Principal
+        <a href="https://www.facebook.com/share/p/16MeXLSJAh/" class="top-bar__link" aria-label="Voltar a postagem do anime">
+            <i class="fas fa-arrow-left"></i> Voltar a Postagem do Anime
         </a>
         <button class="top-bar__theme-toggle" aria-label="Alternar tema">
             <i class="fas fa-sun"></i> Tema
@@ -635,7 +661,8 @@
                     }
                 ],
                 swipeThreshold: 100,
-                adLink: "https://otieu.com/4/9277353"
+                adLink: "https://otieu.com/4/9277353",
+                watchLaterBaseLink: "https://animeigeek.github.io/anime-mono1/?fbclid=IwY2xjawK5vo1leHRuA2FlbQIxMQABHtWWEiV783rOZhrhxrXXG6vl2NXhrrt2j6v626tutukq4LnTwqNBuzKpUZDo_aem_lUg4S_oH_AEz8bXRgNaemA"
             };
 
             let state = {
@@ -649,7 +676,8 @@
                 lastTouchTime: 0,
                 thumbnailWidth: 0,
                 thumbnailsVisible: 0,
-                isAdNext: true // Controla se o próximo clique vai para a propaganda
+                isAdNext: true,
+                isWatchNowBlocked: false
             };
 
             let elements = {
@@ -705,6 +733,7 @@
                             <div class="slide-synopsis">${item.synopsis || 'Sinopse indisponível'}</div>
                             <div class="slide-actions">
                                 <button class="action-button watch-now" aria-label="Assistir ${item.title} ${item.episode} agora">▶ Assistir agora</button>
+                                <button class="action-button watch-later" aria-label="Assistir ${item.title} ${item.episode} depois">⏰ Assistir depois</button>
                             </div>
                         </div>
                     `;
@@ -743,7 +772,12 @@
                 if (!slide) return;
                 const index = parseInt(slide.dataset.index);
                 e.stopPropagation();
-                if (target.classList.contains('watch-now')) watchNow(index);
+                e.preventDefault();
+                if (target.classList.contains('watch-now') && !state.isWatchNowBlocked) {
+                    watchNow(index);
+                } else if (target.classList.contains('watch-later')) {
+                    watchLater(index);
+                }
             }
 
             function handleKeyboardNavigation(e) {
@@ -930,20 +964,64 @@
                 updateSlides();
             }
 
+            function toggleWatchNowButtons(enabled) {
+                const buttons = document.querySelectorAll('.watch-now');
+                buttons.forEach(button => {
+                    button.disabled = !enabled;
+                });
+            }
+
             function watchNow(index) {
                 const item = config.series[index];
-                if (item && item.link) {
+                if (item && item.link && !state.isWatchNowBlocked) {
                     state.currentSlide = index;
                     updateSlides();
-                    showNotification('Você será redirecionado para uma propaganda. Volte para assistir ao vídeo.');
+                    state.isWatchNowBlocked = true;
+                    toggleWatchNowButtons(false);
+
+                    const message = state.isAdNext 
+                        ? 'Você será redirecionado para uma propaganda. Volte para assistir ao vídeo.'
+                        : 'Você será redirecionado para o vídeo do episódio no Google Drive.';
+                    showNotification(message);
+
                     setTimeout(() => {
                         const targetLink = state.isAdNext ? config.adLink : item.link;
                         window.open(targetLink, '_blank');
-                        state.isAdNext = !state.isAdNext; // Alterna entre propaganda e vídeo
-                    }, 3000); // Aguarda 3 segundos para exibir a notificação antes do redirecionamento
+                        state.isAdNext = !state.isAdNext;
+
+                        const unlockDelay = state.isAdNext ? 2000 : 0; // 8s total para propaganda (6s + 2s), 6s para vídeo
+                        setTimeout(() => {
+                            state.isWatchNowBlocked = false;
+                            toggleWatchNowButtons(true);
+                        }, unlockDelay);
+                    }, 6000); // 6 segundos para o aviso
                 } else {
                     showNotification('Link não disponível para este episódio.');
                 }
+            }
+
+            function watchLater(index) {
+                const item = config.series[index];
+                if (item && item.link) {
+                    const message = encodeURIComponent(
+                        `Assista ao anime *${item.title} - ${item.episode}* depois!\n` +
+                        `Link do episódio: ${item.link}\n` +
+                        `Acesse também: ${config.watchLaterBaseLink}`
+                    );
+                    const whatsappUrl = `https://api.whatsapp.com/send?text=${message}`;
+                    window.open(whatsappUrl, '_blank');
+                    showNotification('Link enviado para o WhatsApp!');
+                } else {
+                    showNotification('Link não disponível para este episódio.');
+                }
+            }
+
+            function showNotification(message) {
+                notification.textContent = message;
+                notification.classList.add('show');
+                setTimeout(() => {
+                    notification.classList.remove('show');
+                }, 6000);
             }
 
             function closePlayer() {
@@ -955,14 +1033,6 @@
                 const currentTheme = body.dataset.theme;
                 body.dataset.theme = currentTheme === 'light' ? 'dark' : 'light';
                 themeToggle.innerHTML = `<i class="fas ${body.dataset.theme === 'light' ? 'fa-sun' : 'fa-moon'}"></i> Tema`;
-            }
-
-            function showNotification(message) {
-                notification.textContent = message;
-                notification.classList.add('show');
-                setTimeout(() => {
-                    notification.classList.remove('show');
-                }, 3000);
             }
 
             initialize();
