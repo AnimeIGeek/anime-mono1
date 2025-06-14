@@ -1,0 +1,965 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Momo - Episódios</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Jura:wght@300..700&family=Ubuntu:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            --text-primary: #f9fafb;
+            --text-secondary: #b8c0d0;
+            --background: #070b17;
+            --surface: rgba(255, 255, 255, 0.05);
+            --border: rgba(255, 255, 255, 0.08);
+            --shadow-color: rgba(0, 0, 0, 0.6);
+            --blur-effect: blur(12px);
+            --transition: all 0.6s ease-in-out;
+            --highlight-color: #e50914;
+        }
+
+        [data-theme="light"] {
+            --text-primary: #1f2937;
+            --text-secondary: #4b5563;
+            --background: #f3f4f6;
+            --surface: rgba(0, 0, 0, 0.05);
+            --border: rgba(0, 0, 0, 0.1);
+            --shadow-color: rgba(0, 0, 0, 0.2);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        body {
+            font-family: 'Jura', sans-serif;
+            font-weight: 400;
+            line-height: 1.5;
+            background: var(--background);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 45px;
+            overflow-x: hidden;
+            touch-action: pan-y;
+            transition: background 0.3s ease, color 0.3s ease;
+        }
+
+        .top-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 45px;
+            background: rgba(18, 21, 32, 0.85);
+            backdrop-filter: var(--blur-effect);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 14px;
+            z-index: 1001;
+            box-shadow: 0 2px 5px var(--shadow-color);
+        }
+
+        [data-theme="light"] .top-bar {
+            background: rgba(255, 255, 255, 0.85);
+            border-bottom: 1px solid var(--border);
+            box-shadow: 0 2px 5px var(--shadow-color);
+        }
+
+        .top-bar__link, .top-bar__theme-toggle {
+            color: var(--text-primary);
+            text-decoration: none;
+            font-family: 'Ubuntu', sans-serif;
+            font-weight: 500;
+            font-size: 0.85em;
+            padding: 7px 12px;
+            transition: var(--transition);
+            cursor: pointer;
+        }
+
+        .top-bar__link:hover, .top-bar__theme-toggle:hover {
+            background: var(--surface);
+            color: var(--highlight-color);
+        }
+
+        .slideshow-container {
+            max-width: 800px;
+            width: 95%;
+            margin: 15px auto;
+            position: relative;
+            overflow: hidden;
+            padding: 12px;
+            background: #121520;
+            box-shadow: 0 6px 30px var(--shadow-color);
+            z-index: 10;
+        }
+
+        [data-theme="light"] .slideshow-container {
+            background: #ffffff;
+            box-shadow: 0 6px 30px var(--shadow-color);
+        }
+
+        .carousel-title {
+            font-size: 1.5em;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: var(--text-primary);
+            text-align: center;
+            letter-spacing: 0.4px;
+        }
+
+        .slides-wrapper {
+            height: 340px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 40px;
+            position: relative;
+            padding: 0 25px;
+            touch-action: pan-x;
+        }
+
+        .slide {
+            position: absolute;
+            transition: transform 0.6s ease-in-out, opacity 0.6s ease-in-out, width 0.6s ease-in-out, height 0.6s ease-in-out;
+            width: 204px;
+            height: 153px;
+            opacity: 0.4;
+            pointer-events: none;
+            cursor: grab;
+            overflow: hidden;
+            box-shadow: 0 2px 12px var(--shadow-color);
+            will-change: transform, opacity, width, height;
+        }
+
+        .slide:active {
+            cursor: grabbing;
+        }
+
+        .slide.active {
+            transform: translateX(0) scale(1.15);
+            z-index: 20;
+            opacity: 1;
+            pointer-events: all;
+            width: 306px;
+            height: 229.5px;
+        }
+
+        .slide.prev {
+            transform: translateX(-130%) scale(0.9);
+            z-index: 10;
+            opacity: 0.4;
+        }
+
+        .slide.next {
+            transform: translateX(130%) scale(0.9);
+            z-index: 10;
+            opacity: 0.4;
+        }
+
+        .slide img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+            loading: lazy;
+        }
+
+        .slide-content {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(transparent, rgba(0, 0, 0, 0.8) 30%, rgba(0, 0, 0, 0.9));
+            padding: 10px;
+            transform: translateY(70%);
+            transition: transform 0.4s ease;
+        }
+
+        [data-theme="light"] .slide-content {
+            background: linear-gradient(transparent, rgba(255, 255, 255, 0.8) 30%, rgba(255, 255, 255, 0.9));
+            color: var(--text-primary);
+        }
+
+        .slide.active .slide-content {
+            transform: translateY(0);
+        }
+
+        .slide-title {
+            font-size: 0.9em;
+            font-weight: 600;
+            margin-bottom: 2px;
+            text-transform: lowercase;
+        }
+
+        .slide-episode {
+            font-size: 0.75em;
+            color: var(--text-secondary);
+            margin-bottom: 2px;
+        }
+
+        .slide-duration {
+            font-size: 0.75em;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+        }
+
+        .slide-synopsis {
+            font-size: 0.7em;
+            color: var(--text-primary);
+            line-height: 1.3;
+            max-height: 38px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+        }
+
+        .slide-actions {
+            display: flex;
+            flex-direction: row;
+            gap: 4px;
+            margin-top: 8px;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: opacity 0.4s ease, transform 0.4s ease;
+        }
+
+        .slide.active .slide-actions {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .action-button {
+            padding: 5px 10px;
+            border: none;
+            cursor: pointer;
+            font-family: 'Ubuntu', sans-serif;
+            font-weight: 500;
+            font-size: 0.75em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 3px;
+            transition: transform 0.2s ease, background 0.2s ease;
+            min-width: 70px;
+            text-align: center;
+            background: var(--highlight-color);
+            color: #fff;
+        }
+
+        .action-button:hover {
+            transform: scale(1.05);
+            background: #ff1a1a;
+        }
+
+        .thumbnails {
+            display: flex;
+            justify-content: flex-start;
+            gap: 6px;
+            margin-top: 12px;
+            padding: 6px;
+            background: var(--surface);
+            overflow-x: auto;
+            scroll-behavior: smooth;
+            scrollbar-width: none;
+            cursor: grab;
+            position: relative;
+            touch-action: pan-x;
+            transition: transform 0.5s ease-in-out;
+        }
+
+        .thumbnails::-webkit-scrollbar {
+            display: none;
+        }
+
+        .thumbnails:active {
+            cursor: grabbing;
+        }
+
+        .thumbnail {
+            width: 76.5px;
+            height: 57.375px;
+            cursor: pointer;
+            opacity: 0.7;
+            transition: opacity 0.3s ease, transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+            border: 1.5px solid transparent;
+            overflow: hidden;
+            flex-shrink: 0;
+            position: relative;
+            will-change: opacity, transform;
+        }
+
+        .thumbnail.active {
+            opacity: 1;
+            border-color: var(--highlight-color);
+            transform: scale(1.08);
+            box-shadow: 0 0 8px rgba(229, 9, 20, 0.5);
+        }
+
+        .thumbnail:hover {
+            opacity: 0.9;
+            transform: scale(1.03);
+        }
+
+        .thumbnail img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            loading: lazy;
+        }
+
+        .thumbnail-number {
+            position: absolute;
+            bottom: 2px;
+            left: 2px;
+            background: rgba(0, 0, 0, 0.7);
+            color: #fff;
+            font-size: 0.65em;
+            padding: 1px 3px;
+        }
+
+        [data-theme="light"] .thumbnail-number {
+            background: rgba(255, 255, 255, 0.7);
+            color: var(--text-primary);
+        }
+
+        .swipe-indicator {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-primary);
+            font-size: 0.65em;
+            padding: 5px;
+            background: rgba(0, 0, 0, 0.5);
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        [data-theme="light"] .swipe-indicator {
+            background: rgba(255, 255, 255, 0.5);
+            color: var(--text-primary);
+        }
+
+        .swipe-left {
+            left: 10px;
+        }
+
+        .swipe-right {
+            right: 10px;
+        }
+
+        .video-player {
+            width: 100%;
+            height: 212.5px;
+            background: #000;
+            display: none;
+            z-index: 10;
+            border: none;
+            box-shadow: 0 2px 10px var(--shadow-color);
+        }
+
+        .video-player.active {
+            display: block;
+        }
+
+        .video-player iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        .close-player {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: rgba(0, 0, 0, 0.7);
+            color: #fff;
+            border: none;
+            width: 27px;
+            height: 27px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background 0.2s ease;
+            z-index: 10;
+        }
+
+        .close-player:hover {
+            background: rgba(229, 9, 20, 0.8);
+        }
+
+        [data-theme="light"] .close-player {
+            background: rgba(255, 255, 255, 0.7);
+            color: var(--text-primary);
+        }
+
+        .notification {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            padding: 7px 14px;
+            background: rgba(18, 21, 32, 0.95);
+            color: var(--text-primary);
+            box-shadow: 0 2px 8px var(--shadow-color);
+            opacity: 0;
+            transform: translateY(10px);
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            z-index: 2000;
+            font-size: 0.75em;
+        }
+
+        [data-theme="light"] .notification {
+            background: rgba(255, 255, 255, 0.95);
+            color: var(--text-primary);
+        }
+
+        .notification.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .anime-info {
+            max-width: 800px;
+            width: 95%;
+            margin: 12px auto;
+            padding: 17px;
+            background: var(--surface);
+            box-shadow: 0 4px 20px var(--shadow-color);
+            color: var(--text-primary);
+        }
+
+        .anime-info h2 {
+            font-size: 1.53em;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--highlight-color);
+        }
+
+        .anime-info p {
+            font-size: 0.765em;
+            line-height: 1.6;
+            margin-bottom: 12px;
+        }
+
+        .footer {
+            width: 100%;
+            background: rgba(18, 21, 32, 0.85);
+            color: var(--text-secondary);
+            text-align: center;
+            padding: 8px 0;
+            margin-top: 17px;
+            box-shadow: 0 -2px 5px var(--shadow-color);
+        }
+
+        [data-theme="light"] .footer {
+            background: rgba(255, 255, 255, 0.85);
+            color: var(--text-primary);
+        }
+
+        @media (max-width: 768px) {
+            .slides-wrapper {
+                height: 289px;
+                gap: 25.5px;
+                padding: 0 12px;
+            }
+
+            .slide {
+                width: 170px;
+                height: 127.5px;
+            }
+
+            .slide.active {
+                width: 255px;
+                height: 191.25px;
+            }
+
+            .slide.prev {
+                transform: translateX(-110%) scale(0.9);
+            }
+
+            .slide.next {
+                transform: translateX(110%) scale(0.9);
+            }
+
+            .slide-content {
+                padding: 8.5px;
+            }
+
+            .slide-title {
+                font-size: 0.765em;
+            }
+
+            .slide-episode,
+            .slide-duration {
+                font-size: 0.6375em;
+            }
+
+            .slide-synopsis {
+                font-size: 0.595em;
+                max-height: 34px;
+            }
+
+            .action-button {
+                padding: 4.25px 8.5px;
+                font-size: 0.6375em;
+                min-width: 59.5px;
+            }
+
+            .thumbnails {
+                gap: 5.1px;
+            }
+
+            .thumbnail {
+                width: 68px;
+                height: 51px;
+            }
+
+            .thumbnail-number {
+                font-size: 0.5525em;
+            }
+
+            .video-player {
+                height: 153px;
+            }
+        }
+    </style>
+</head>
+<body data-theme="dark">
+    <div class="top-bar">
+        <a href="https://anime-site-principal.com" class="top-bar__link" aria-label="Voltar ao site principal">
+            <i class="fas fa-arrow-left"></i> Voltar ao Site Principal
+        </a>
+        <button class="top-bar__theme-toggle" aria-label="Alternar tema">
+            <i class="fas fa-moon"></i> Tema
+        </button>
+    </div>
+    <div class="slideshow-container" id="slideshow-container" aria-live="polite">
+        <div class="carousel-section">
+            <div class="carousel-title">Momo - Episódios</div>
+            <div class="slides-wrapper" id="slidesWrapper">
+                <div class="swipe-indicator swipe-left">← Assistir agora (1 dedo)</div>
+                <div class="swipe-indicator swipe-right">Assistir agora (1 dedo) →</div>
+            </div>
+            <div class="thumbnails" id="thumbnails"></div>
+        </div>
+    </div>
+    <div class="video-player" id="videoPlayer"></div>
+    <div class="anime-info">
+        <h2>Sobre Momo</h2>
+        <p><strong>Gênero:</strong> Aventura, Fantasia, Drama</p>
+        <p><strong>Estúdio:</strong> Studio Ghibli (inspirado)</p>
+        <p><strong>Diretor:</strong> Hayao Miyazaki (hipotético)</p>
+        <p><strong>Sinopse:</strong> Em um mundo onde o equilíbrio entre a natureza e a humanidade está em crise, Momo, uma jovem de espírito indomável, descobre um segredo ancestral que a conecta a uma força mística guardada por espíritos antigos. Sua jornada começa quando ela encontra um artefato perdido, desencadeando uma série de eventos que a levam a enfrentar desafios épicos, formar alianças improváveis com criaturas mágicas e desvendar as camadas de um passado esquecido. Com uma narrativa rica em simbolismo e uma exploração profunda da resiliência humana, "Momo" combina elementos de autodescoberta com batalhas emocionantes, oferecendo uma experiência cinematográfica que reflete sobre o impacto de nossas escolhas no destino do planeta. Prepare-se para mergulhar em um universo onde cada episódio revela um novo capítulo de coragem e redenção.</p>
+    </div>
+    <div class="footer">
+        <p>© 2025 Momo Anime. Todos os direitos reservados. Desenvolvido por xAI.</p>
+    </div>
+    <div class="notification" id="notification"></div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const slideshowContainer = document.getElementById('slideshow-container');
+            const notification = document.getElementById('notification');
+            const themeToggle = document.querySelector('.top-bar__theme-toggle');
+            const body = document.body;
+            const videoPlayer = document.getElementById('videoPlayer');
+
+            if (!slideshowContainer || !notification || !themeToggle || !videoPlayer) {
+                console.error('Elementos essenciais não encontrados');
+                return;
+            }
+
+            const config = {
+                series: [
+                    {
+                        title: "Momo",
+                        episode: "Ep. 1",
+                        duration: "24 minutos",
+                        synopsis: "Momo embarca em uma jornada para descobrir seus verdadeiros poderes.",
+                        image: "https://i.postimg.cc/pdTq8c1f/mono-satsuki-amamiya-header.jpg",
+                        link: "https://drive.google.com/file/d/1gjCBn4DhPafWkM1iFCIAYZqMd-kEGOOu/view?usp=drivesdk"
+                    },
+                    {
+                        title: "Momo",
+                        episode: "Ep. 2",
+                        duration: "24 minutos",
+                        synopsis: "Um novo desafio testa a coragem de Momo contra um inimigo poderoso.",
+                        image: "https://i.postimg.cc/pdTq8c1f/mono-satsuki-amamiya-header.jpg",
+                        link: "https://drive.google.com/file/d/168X-8mvF8_HofppYo6bEJPSJeJtX0-4n/preview"
+                    },
+                    {
+                        title: "Momo",
+                        episode: "Ep. 3",
+                        duration: "24 minutos",
+                        synopsis: "Momo encontra aliados inesperados em sua aventura.",
+                        image: "https://i.postimg.cc/pdTq8c1f/mono-satsuki-amamiya-header.jpg",
+                        link: "https://drive.google.com/file/d/168X-8mvF8_HofppYo6bEJPSJeJtX0-4n/preview"
+                    },
+                    {
+                        title: "Momo",
+                        episode: "Ep. 4",
+                        duration: "24 minutos",
+                        synopsis: "Segredos do passado de Momo começam a ser revelados.",
+                        image: "https://i.postimg.cc/pdTq8c1f/mono-satsuki-amamiya-header.jpg",
+                        link: "https://drive.google.com/file/d/168X-8mvF8_HofppYo6bEJPSJeJtX0-4n/preview"
+                    },
+                    {
+                        title: "Momo",
+                        episode: "Ep. 5",
+                        duration: "24 minutos",
+                        synopsis: "Momo enfrenta uma batalha decisiva que pode mudar seu destino.",
+                        image: "https://i.postimg.cc/pdTq8c1f/mono-satsuki-amamiya-header.jpg",
+                        link: "https://drive.google.com/file/d/168X-8mvF8_HofppYo6bEJPSJeJtX0-4n/preview"
+                    },
+                    {
+                        title: "Momo",
+                        episode: "Ep. 6",
+                        duration: "24 minutos",
+                        synopsis: "O clímax da jornada de Momo traz revelações surpreendentes.",
+                        image: "https://i.postimg.cc/pdTq8c1f/mono-satsuki-amamiya-header.jpg",
+                        link: "https://drive.google.com/file/d/168X-8mvF8_HofppYo6bEJPSJeJtX0-4n/preview"
+                    }
+                ],
+                swipeThreshold: 100
+            };
+
+            let state = {
+                currentSlide: 0,
+                isDraggingSlides: false,
+                isDraggingThumbnails: false,
+                startX: 0,
+                currentX: 0,
+                thumbnailScrollStart: 0,
+                thumbnailScrollPos: 0,
+                lastTouchTime: 0,
+                thumbnailWidth: 0,
+                thumbnailsVisible: 0
+            };
+
+            let elements = {
+                slidesWrapper: document.getElementById('slidesWrapper'),
+                thumbnails: document.getElementById('thumbnails'),
+                videoPlayer: videoPlayer
+            };
+
+            function initialize() {
+                if (!elements.slidesWrapper || !elements.thumbnails || !elements.videoPlayer) {
+                    console.error('Elementos do carrossel não encontrados');
+                    return;
+                }
+                createCarousels();
+                updateThumbnailMetrics();
+                setupEventListeners();
+                window.addEventListener('resize', () => {
+                    clearTimeout(state.resizeTimeout);
+                    state.resizeTimeout = setTimeout(updateThumbnailMetrics, 100);
+                });
+            }
+
+            function updateThumbnailMetrics() {
+                const thumbnail = elements.thumbnails.querySelector('.thumbnail');
+                if (thumbnail) {
+                    state.thumbnailWidth = thumbnail.offsetWidth + 6;
+                    state.thumbnailsVisible = Math.floor(elements.thumbnails.offsetWidth / state.thumbnailWidth);
+                    updateThumbnailsPosition();
+                }
+            }
+
+            function createCarousels() {
+                elements.slidesWrapper.innerHTML = `
+                    <div class="swipe-indicator swipe-left">← Assistir agora (1 dedo)</div>
+                    <div class="swipe-indicator swipe-right">Assistir agora (1 dedo) →</div>
+                `;
+                elements.thumbnails.innerHTML = '';
+                elements.videoPlayer.innerHTML = '';
+
+                const items = config.series;
+
+                items.forEach((item, index) => {
+                    const slide = document.createElement('div');
+                    slide.className = 'slide';
+                    slide.dataset.index = index;
+                    slide.setAttribute('aria-label', `Episódio ${item.episode}: ${item.title}`);
+                    slide.innerHTML = `
+                        <img src="${item.image}" alt="${item.title}" loading="lazy" onerror="this.src='https://via.placeholder.com/360x270?text=Imagem+Indisponível'">
+                        <div class="slide-content">
+                            <div class="slide-title">${item.title.toLowerCase()}</div>
+                            <div class="slide-episode">${item.episode}</div>
+                            <div class="slide-duration">${item.duration}</div>
+                            <div class="slide-synopsis">${item.synopsis || 'Sinopse indisponível'}</div>
+                            <div class="slide-actions">
+                                <button class="action-button watch-now" aria-label="Assistir ${item.title} ${item.episode} agora">▶ Assistir agora</button>
+                            </div>
+                        </div>
+                    `;
+                    elements.slidesWrapper.appendChild(slide);
+
+                    const thumbnail = document.createElement('button');
+                    thumbnail.className = 'thumbnail';
+                    thumbnail.dataset.index = index;
+                    thumbnail.setAttribute('aria-label', `Selecionar episódio ${item.episode}`);
+                    thumbnail.innerHTML = `
+                        <img src="${item.image}" alt="Thumbnail ${item.title}" loading="lazy" onerror="this.src='https://via.placeholder.com/90x67.5?text=Thumbnail'">
+                        <div class="thumbnail-number">${item.episode}</div>
+                    `;
+                    thumbnail.onclick = () => goToSlide(index);
+                    elements.thumbnails.appendChild(thumbnail);
+                });
+                updateSlides();
+            }
+
+            function setupEventListeners() {
+                elements.slidesWrapper.addEventListener('click', handleSlideClick);
+                elements.slidesWrapper.addEventListener('touchstart', touchStartSlides, { passive: true });
+                elements.slidesWrapper.addEventListener('touchmove', touchMoveSlides, { passive: false });
+                elements.slidesWrapper.addEventListener('touchend', touchEndSlides, { passive: true });
+                elements.slidesWrapper.addEventListener('wheel', handleWheel, { passive: true });
+                elements.thumbnails.addEventListener('touchstart', touchStartThumbnails, { passive: true });
+                elements.thumbnails.addEventListener('touchmove', touchMoveThumbnails, { passive: false });
+                elements.thumbnails.addEventListener('touchend', touchEndThumbnails, { passive: true });
+                document.addEventListener('keydown', handleKeyboardNavigation);
+                themeToggle.addEventListener('click', toggleTheme);
+            }
+
+            function handleSlideClick(e) {
+                const target = e.target;
+                const slide = target.closest('.slide');
+                if (!slide) return;
+                const index = parseInt(slide.dataset.index);
+                e.stopPropagation();
+                if (target.classList.contains('watch-now')) watchNow(index);
+            }
+
+            function handleKeyboardNavigation(e) {
+                if (e.key === 'ArrowLeft') prevSlide();
+                else if (e.key === 'ArrowRight') nextSlide();
+                else if (e.key === 'Enter' && document.activeElement.classList.contains('thumbnail')) {
+                    goToSlide(parseInt(document.activeElement.dataset.index));
+                }
+            }
+
+            function handleWheel(e) {
+                if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+                    e.preventDefault();
+                    return;
+                }
+                e.preventDefault();
+                if (e.deltaX > 0) nextSlide();
+                else prevSlide();
+            }
+
+            function touchStartSlides(e) {
+                state.isDraggingSlides = true;
+                state.startX = e.touches[0].clientX;
+                state.lastTouchTime = Date.now();
+                updateSwipeIndicators();
+            }
+
+            function touchMoveSlides(e) {
+                if (!state.isDraggingSlides) return;
+                state.currentX = e.touches[0].clientX;
+                const deltaX = state.startX - state.currentX;
+                const deltaY = Math.abs(e.touches[0].clientY - e.touches[0].clientY);
+                if (deltaY > Math.abs(deltaX)) {
+                    e.preventDefault();
+                    return;
+                }
+                e.preventDefault();
+                const slides = elements.slidesWrapper.querySelectorAll('.slide');
+                const maxTranslate = 130;
+                slides.forEach((slide, i) => {
+                    const isActive = i === state.currentSlide;
+                    const isPrev = i === (state.currentSlide - 1 + config.series.length) % config.series.length;
+                    const isNext = i === (state.currentSlide + 1) % config.series.length;
+                    let translateX = 0;
+                    let scale = 0.9;
+                    let opacity = 0.4;
+
+                    if (isPrev) {
+                        translateX = -maxTranslate + (deltaX / 1.5);
+                        opacity = Math.min(1, 0.4 + Math.abs(deltaX / 300));
+                        scale = Math.min(0.9, 0.9 + (Math.abs(deltaX) / 1000));
+                    } else if (isNext) {
+                        translateX = maxTranslate - (deltaX / 1.5);
+                        opacity = Math.min(1, 0.4 + Math.abs(deltaX / 300));
+                        scale = Math.min(0.9, 0.9 + (Math.abs(deltaX) / 1000));
+                    } else if (isActive) {
+                        translateX = deltaX / 5;
+                        opacity = 1;
+                        scale = 1.15;
+                    }
+
+                    slide.style.transform = `translateX(${translateX}%) scale(${scale})`;
+                    slide.style.opacity = opacity;
+                });
+                requestAnimationFrame(updateSwipeIndicators);
+            }
+
+            function touchEndSlides(e) {
+                if (!state.isDraggingSlides) return;
+                const diffX = state.startX - state.currentX;
+                const timeElapsed = Date.now() - state.lastTouchTime;
+                if (Math.abs(diffX) > config.swipeThreshold && timeElapsed > 100) {
+                    if (diffX > 0) nextSlide();
+                    else prevSlide();
+                }
+                state.isDraggingSlides = false;
+                state.startX = 0;
+                state.currentX = 0;
+                updateSlides();
+                updateSwipeIndicators();
+            }
+
+            function touchStartThumbnails(e) {
+                state.isDraggingThumbnails = true;
+                state.startX = e.touches[0].clientX;
+                state.thumbnailScrollStart = state.thumbnailScrollPos;
+                e.preventDefault();
+            }
+
+            function touchMoveThumbnails(e) {
+                if (!state.isDraggingThumbnails) return;
+                e.preventDefault();
+                const currentX = e.touches[0].clientX;
+                const diffX = state.startX - currentX;
+                state.thumbnailScrollPos = state.thumbnailScrollStart + diffX;
+                const maxScroll = Math.max(0, elements.thumbnails.scrollWidth - elements.thumbnails.offsetWidth);
+                state.thumbnailScrollPos = Math.min(maxScroll, Math.max(0, state.thumbnailScrollPos));
+                elements.thumbnails.style.transform = `translateX(-${state.thumbnailScrollPos}px)`;
+            }
+
+            function touchEndThumbnails(e) {
+                if (!state.isDraggingThumbnails) return;
+                state.isDraggingThumbnails = false;
+                snapThumbnails();
+            }
+
+            function snapThumbnails() {
+                const closestIndex = Math.round(state.thumbnailScrollPos / state.thumbnailWidth);
+                state.thumbnailScrollPos = closestIndex * state.thumbnailWidth;
+                const maxScroll = Math.max(0, elements.thumbnails.scrollWidth - elements.thumbnails.offsetWidth);
+                state.thumbnailScrollPos = Math.min(maxScroll, Math.max(0, state.thumbnailScrollPos));
+                elements.thumbnails.style.transition = 'transform 0.5s ease-in-out';
+                elements.thumbnails.style.transform = `translateX(-${state.thumbnailScrollPos}px)`;
+                setTimeout(() => {
+                    elements.thumbnails.style.transition = '';
+                }, 500);
+            }
+
+            function updateSwipeIndicators() {
+                const indicators = elements.slidesWrapper.querySelectorAll('.swipe-indicator');
+                indicators.forEach(indicator => {
+                    indicator.style.opacity = state.isDraggingSlides ? '1' : '0';
+                });
+            }
+
+            function updateSlides() {
+                requestAnimationFrame(() => {
+                    const slides = elements.slidesWrapper.querySelectorAll('.slide');
+                    const thumbnails = elements.thumbnails.querySelectorAll('.thumbnail');
+                    const items = config.series;
+
+                    slides.forEach((slide, i) => {
+                        slide.classList.remove('active', 'prev', 'next');
+                        if (i === state.currentSlide) {
+                            slide.classList.add('active');
+                            slide.style.transform = 'translateX(0) scale(1.15)';
+                            slide.style.opacity = '1';
+                            slide.style.width = '306px';
+                            slide.style.height = '229.5px';
+                        } else {
+                            if (i === (state.currentSlide - 1 + items.length) % items.length) {
+                                slide.classList.add('prev');
+                                slide.style.transform = 'translateX(-130%) scale(0.9)';
+                            } else if (i === (state.currentSlide + 1) % items.length) {
+                                slide.classList.add('next');
+                                slide.style.transform = 'translateX(130%) scale(0.9)';
+                            }
+                            slide.style.opacity = '0.4';
+                            slide.style.width = '204px';
+                            slide.style.height = '153px';
+                        }
+                    });
+
+                    thumbnails.forEach((thumbnail, i) => {
+                        thumbnail.classList.toggle('active', i === state.currentSlide);
+                    });
+
+                    updateThumbnailsPosition();
+                });
+            }
+
+            function updateThumbnailsPosition() {
+                if (state.thumbnailsVisible) {
+                    const offset = (state.currentSlide - Math.floor(state.thumbnailsVisible / 2)) * state.thumbnailWidth;
+                    state.thumbnailScrollPos = Math.max(0, offset);
+                    const maxScroll = Math.max(0, elements.thumbnails.scrollWidth - elements.thumbnails.offsetWidth);
+                    state.thumbnailScrollPos = Math.min(maxScroll, state.thumbnailScrollPos);
+                    elements.thumbnails.style.transform = `translateX(-${state.thumbnailScrollPos}px)`;
+                }
+            }
+
+            function nextSlide() {
+                state.currentSlide = (state.currentSlide + 1) % config.series.length;
+                updateSlides();
+            }
+
+            function prevSlide() {
+                state.currentSlide = (state.currentSlide - 1 + config.series.length) % config.series.length;
+                updateSlides();
+            }
+
+            function goToSlide(index) {
+                state.currentSlide = index;
+                updateSlides();
+            }
+
+            function watchNow(index) {
+                const item = config.series[index];
+                if (item && item.link) {
+                    state.currentSlide = index;
+                    updateSlides();
+                    window.open(item.link, '_blank');
+                } else {
+                    showNotification('Link não disponível para este episódio.');
+                }
+            }
+
+            function closePlayer() {
+                elements.videoPlayer.classList.remove('active');
+                elements.videoPlayer.innerHTML = '';
+            }
+
+            function toggleTheme() {
+                const currentTheme = body.dataset.theme;
+                body.dataset.theme = currentTheme === 'dark' ? 'light' : 'dark';
+                themeToggle.innerHTML = `<i class="fas ${body.dataset.theme === 'dark' ? 'fa-moon' : 'fa-sun'}"></i> Tema`;
+            }
+
+            function showNotification(message) {
+                notification.textContent = message;
+                notification.classList.add('show');
+                setTimeout(() => {
+                    notification.classList.remove('show');
+                }, 3000);
+            }
+
+            initialize();
+        });
+    </script>
+</body>
+</html>
