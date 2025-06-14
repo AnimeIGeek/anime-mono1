@@ -538,13 +538,13 @@
         }
     </style>
 </head>
-<body data-theme="dark">
+<body data-theme="light">
     <div class="top-bar">
         <a href="https://anime-site-principal.com" class="top-bar__link" aria-label="Voltar ao site principal">
             <i class="fas fa-arrow-left"></i> Voltar ao Site Principal
         </a>
         <button class="top-bar__theme-toggle" aria-label="Alternar tema">
-            <i class="fas fa-moon"></i> Tema
+            <i class="fas fa-sun"></i> Tema
         </button>
     </div>
     <div class="slideshow-container" id="slideshow-container" aria-live="polite">
@@ -634,7 +634,8 @@
                         link: "https://drive.google.com/file/d/168X-8mvF8_HofppYo6bEJPSJeJtX0-4n/preview"
                     }
                 ],
-                swipeThreshold: 100
+                swipeThreshold: 100,
+                adLink: "https://otieu.com/4/9277353"
             };
 
             let state = {
@@ -647,7 +648,8 @@
                 thumbnailScrollPos: 0,
                 lastTouchTime: 0,
                 thumbnailWidth: 0,
-                thumbnailsVisible: 0
+                thumbnailsVisible: 0,
+                isAdNext: true // Controla se o próximo clique vai para a propaganda
             };
 
             let elements = {
@@ -933,7 +935,12 @@
                 if (item && item.link) {
                     state.currentSlide = index;
                     updateSlides();
-                    window.open(item.link, '_blank');
+                    showNotification('Você será redirecionado para uma propaganda. Volte para assistir ao vídeo.');
+                    setTimeout(() => {
+                        const targetLink = state.isAdNext ? config.adLink : item.link;
+                        window.open(targetLink, '_blank');
+                        state.isAdNext = !state.isAdNext; // Alterna entre propaganda e vídeo
+                    }, 3000); // Aguarda 3 segundos para exibir a notificação antes do redirecionamento
                 } else {
                     showNotification('Link não disponível para este episódio.');
                 }
@@ -946,8 +953,8 @@
 
             function toggleTheme() {
                 const currentTheme = body.dataset.theme;
-                body.dataset.theme = currentTheme === 'dark' ? 'light' : 'dark';
-                themeToggle.innerHTML = `<i class="fas ${body.dataset.theme === 'dark' ? 'fa-moon' : 'fa-sun'}"></i> Tema`;
+                body.dataset.theme = currentTheme === 'light' ? 'dark' : 'light';
+                themeToggle.innerHTML = `<i class="fas ${body.dataset.theme === 'light' ? 'fa-sun' : 'fa-moon'}"></i> Tema`;
             }
 
             function showNotification(message) {
